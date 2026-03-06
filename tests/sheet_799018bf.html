@@ -1,0 +1,27 @@
+<!doctype html><html lang="en" qva-bootstrap="false" class="single-full-height" ng-controller="singleObjectCtrl" ng-class="{'no-scroll': loading}"><head><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><title>Single Object</title><base href="./"><meta charset="utf-8"><meta name="HandheldFriendly" content="True"><meta name="MobileOptimized" content="320"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta http-equiv="cleartype" content="on"><link rel="shortcut icon" href="../resources/favicon.ico"><link rel="apple-touch-icon" href="../resources/img/core/logo/Sense_120x120.png"><link rel="apple-touch-icon" sizes="152x152" href="../resources/img/core/logo/Sense_152x152.png"><link rel="apple-touch-icon" sizes="167x167" href="../resources/img/core/logo/Sense_167x167.png"><link rel="apple-touch-icon" sizes="180x180" href="../resources/img/core/logo/Sense_180x180.png"><style>.sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    .hidden-screen-reader-label {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+    }</style><script src="../resources/main.js" data-namespace="QlikMain"></script></head><body class="qw single-full-height qv-client"><div class="qv-preload-icons" style="opacity: 0">.</div><div class="qv-preload-font" style="opacity: 0">.ὰ</div><div class="qv-preload-font-bold" style="opacity: 0">.ὰ</div><div id="qv-stage-container" class="single-full-height"><div id="single-object" class="single-object" ng-class="{'noanimate': options.noAnimate}" role="application"><div id="CURRSELPANEL"></div><div id="grid-wrap" class="single-full-height" ng-if="!sheetHidden" ng-keydown="keyDown($event)" ng-focus="onFocus()" tabindex="0"><div class="single-full-height" id="grid"><label class="hidden-screen-reader-label">{{embeddedSheetScreenReader}}</label><article role="contentinfo" qva-radial-context-menu="openContextMenu($event)" qva-context-menu="openContextMenu($event)" id="content" ng-class="{'selections-disabled' : options.noSelections, 'reduce-top-padding': reduceTopPadding}" ng-keydown="keyDown($event)"></article><qv-spinner class="single-load-indicator" show="loading"></qv-spinner><div id="download-dialog-single"></div></div></div><div id="qv-page-container" ng-class="{'qv-panel-wrap' : sheetHidden}" ng-if="sheetHidden"><div id="qs-page-container"><div class="qs-view-error qs-view-error__align"><div class="qs-view-error__center"><div class="qs-view-error__image" tid="errorMsgHiddenSheet"><img ng-src="{{sheetHiddenSvg}}"/></div><div class="qs-view-error__title" q-translation="{{title}}"></div><div class="qs-view-error__message" q-translation="{{message}}"></div></div></div></div></div></div></div><script type="module">// apply feature overrides
+    const { features } = await QlikMain.import("@qlik-trial/qmfe-api");
+    const { data: featureFlags } = await features.getFeatures({ hostConfig: { host: QlikMain.getRootUrl() } }).catch(() => ({ data: {} }));
+    await QlikMain.applyFeatureOverrides(featureFlags);
+    // load devtool
+    const isProdUrl = window.location.host.endsWith(".qlikcloud.com");
+    const devtoolEnabled = window.localStorage.getItem("devtools") === "true";
+    if (devtoolEnabled && !isProdUrl) {
+      await QlikMain.import("@qmfe/devtool");
+    }
+    // start main qmfe parcel
+    QlikMain.import("@qmfe/sense-client/single");</script></body></html>
