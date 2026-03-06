@@ -13,13 +13,12 @@ pip install -r requirements.txt
 ## Menjalankan Ekspor Data (Tool Utama)
 
 Skrip paling stabil dan tercepat untuk mengambil file CSV (termasuk Occupation, Points, Status, Nominated State, dll.) berada di:  
-`tools/qlik_playwright_export.py`  
-_(Catatan: Walau namanya mengandung 'playwright', mesin skrip ini sudah ditulis ulang murni menggunakan koneksi WebSocket ke protokol Qlik untuk mengatasi limitasi dari UI website aslinya)._
+`tools/qlik_websocket_export.py`
 
 **Cara Menggunakan:**
 
 ```bash
-python tools/qlik_playwright_export.py
+python tools/qlik_websocket_export.py
 ```
 
 Program akan berjalan diam-diam (_headless background_) dan meminta Anda mengisi parameter interaktif di terminal:
@@ -28,8 +27,9 @@ Program akan berjalan diam-diam (_headless background_) dan meminta Anda mengisi
 2. **Point**: Ketik batas poin (mis. `75`). Tekan Enter untuk mengosongkan.
 3. **Nominated State**: Ketik state (mis. `VIC`, `NSW`). Tekan Enter untuk mengosongkan.
 4. **Visa Type**: Pilih dari daftar angka yang disediakan (189, 190, 491).
+5. **As At Month**: Pilih bulan yang tersedia untuk ditarik datanya, atau biarkan kosong (All) untuk mengunduh semua historis bulan yang digabungkan secara otomatis.
 
-💡 **Fitur Otomatis**: Skrip ini akan secara mandiri mengurus "As At Month" filter wajib yang ada pada website dan memaksa Qlik Server memproses dataset raksasa (sampai jutaan data kombinasi) tanpa membatasi jumlah kolom parameter!
+💡 **Fitur Otomatis**: Skrip ini menggunakan API WebSocket untuk mem-bypass UI website. Anda dapat menarik dan menggabungkan data semua bulan sekaligus! Qlik Server dipaksa memproses dataset raksasa (sampai jutaan data kombinasi) tanpa membatasi jumlah kolom parameter!
 
 **Hasil Data:**
 Skrip akan mencetak progresnya dan langsung mengunduh file hasil ke dalam:
@@ -42,7 +42,7 @@ Skrip akan mencetak progresnya dan langsung mengunduh file hasil ke dalam:
 Untuk menjaga repositori tetap bersih dan rapi, disarankan mengikuti struktur folder berikut:
 
 - `tools/`  
-  Berisi _tools_ andalan proyek ini, yakni `qlik_playwright_export.py` (tool utama) dan `qlik_selenium_export.py` (tool versi UI lama sebagai cadangan).
+  Berisi _tools_ andalan proyek ini, yakni `qlik_websocket_export.py` (tool utama) dan `qlik_selenium_export.py` (tool versi UI lama sebagai cadangan).
 - `src/`  
   Berisi skrip _scraper_ dari iterasi / percobaan program versi terdahulu.
 - `data/`  
