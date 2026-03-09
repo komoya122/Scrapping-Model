@@ -6,7 +6,10 @@ import datetime
 import sys
 from curl_cffi import requests
 
-log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nero.log')
+repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+log_dir = os.path.join(repo_root, "data", "log", "nero")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, 'nero.log')
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s',

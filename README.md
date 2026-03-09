@@ -33,7 +33,9 @@ Program akan berjalan diam-diam (_headless background_) dan meminta Anda mengisi
 
 **Hasil Data:**
 Skrip akan mencetak progresnya dan langsung mengunduh file hasil ke dalam:
-👉 `data/output/eoi_[Parameter]_[Timestamp].csv`
+👉 `data/eoi_ss/eoi_[Parameter]_[Timestamp].csv`
+
+**Catatan Log:** Proses ekspor akan dicatat otomatis di `data/log/eoi_ss/eoi_ss.log`.
 
 ## Menjalankan Ekspor NERO Data (Nowcast of Employment)
 
@@ -49,7 +51,25 @@ python tools/nero_employment_data_au.py
 
 - Mengunduh rilis `Main NERO Data` & `Regional and Northern Australia Data` terbaru.
 - Ekstraksi `.zip` otomatis langsung ke format CSV.
-- File keluaran disimpan ke `data/nero/`.
+- File keluaran CSV disimpan ke `data/nero/`.
+- File catatan histori log akan disimpan ke `data/log/nero/nero.log`.
+
+## Menjalankan Ekspor Kuota Tahunan Migration (State & National)
+
+Skrip baru untuk menarik kuota imigrasi (Migration Program Planning Levels & State Nomination Allocations) langsung dari website resmi Home Affairs. Skrip ini secara khusus mem-_bypass_ pemblokiran dari Akamai dan mengekstrak tabel HTML yang disembunyikan di dalam field JSON.
+
+**Cara Menggunakan:**
+
+```bash
+python tools/migration_quotas_au.py
+```
+
+**Fitur Quotas Tool:**
+
+- Mengunduh data "National Migration Program Planning Levels".
+- Mengunduh data "State and territory nomination allocations".
+- Menyimpan hasil ekstraksi secara otomatis ke format CSV di dalam folder `data/migration_quota/`.
+- File catatan histori log akan disimpan ke `data/log/migration_quota/migration_quotas.log`.
 
 ---
 
@@ -61,11 +81,15 @@ Untuk menjaga repositori tetap bersih dan rapi, disarankan mengikuti struktur fo
   Berisi _tools_ andalan proyek ini:
   - `eoi_skillselect_au.py` (Tool ekspor Qlik/EOI utama)
   - `nero_employment_data_au.py` (Tool automasi NERO data)
+  - `migration_quotas_au.py` (Tool scraper Kuota Imigrasi)
 - `src/`  
   Berisi skrip _scraper_ dari iterasi / percobaan program versi terdahulu.
 - `data/`  
-  Berisi semua input statis dan output sistem.
-  - `data/output/` : **SANGAT PENTING**. Di sinilah seluruh data `.csv` final, serta _dump files_ JSON atau _screenshot errors_ akan secara otomatis tersimpan setiap kali skrip dijalankan.
+  Berisi semua input statis dan direktori output sistem otomatis:
+  - `data/eoi_ss/` : Folder keluaran hasil ekspor dari dashboard Qlik/EOI
+  - `data/nero/` : Folder keluaran hasil download & ekstrak NERO ZIP Data
+  - `data/migration_quota/` : Folder keluaran final Migration Quotas (State & National)
+  - `data/log/` : Menampung seluruh riwayat log pemakaian dari skrip tools terkait
 - `tests/`  
   Kumpulan arsip skrip percobaan backend (seperti `qix_test_*.py`) yang digunakan saat me-_reverse-engineer_ dan menjebol limitasi dimensi Qlik Engine.
 

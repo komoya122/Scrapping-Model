@@ -23,10 +23,21 @@ except ImportError:
 import asyncio
 import json
 import time
+import logging
 from pathlib import Path
 from typing import Optional
 import requests
 
+log_dir = Path("data") / "log" / "eoi_ss"
+log_dir.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_dir / "eoi_ss.log", encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
 APPID = "aaac76b5-ad30-477e-9ca0-472f8ab57fc8"
 TABLE_ID = "eymDb"
@@ -64,12 +75,12 @@ def make_out_path(as_at_month: str, occupation: Optional[str]) -> str:
     occ = (occupation or "All").replace("/", "-").replace("\\", "-").replace(" ", "_")
     
     fname = f"eoi_{month_clean}_{occ}_{t}.csv"
-    out = Path("data") / "output" / fname
+    out = Path("data") / "eoi_ss" / fname
     out.parent.mkdir(parents=True, exist_ok=True)
     return str(out)
 
 async def get_available_months() -> list[str]:
-    print("Fetching available 'As At Month' options from Qlik...")
+    logging.info("Fetching available 'As At Month' options from Qlik...")
     months = []
     
     session = requests.Session()
@@ -110,7 +121,7 @@ async def get_available_months() -> list[str]:
 
 
 async def qix_export(occupation, point, nominated_state, visa, target_months):
-    print(f"Connecting to QIX Engine API...")
+    logging.info("Connecting to QIX Engine API...")
     
     # Needs a session to store Qlik Proxy Cookies so the final TempContent download is authorized
     session = requests.Session()
@@ -151,7 +162,7 @@ async def qix_export(occupation, point, nominated_state, visa, target_months):
         # Helper to select a value
         async def apply_sel(field_name, value):
             if not value: return
-            print(f"Applying selection: {field_name} = '{value}'")
+            logging.info(f"Applying selection: {field_name} = '{value}'")
             list_def = {"qInfo": {"qId": f"tmp_{field_name}", "qType": "ListObject"},"qListObjectDef": {"qDef": {"qFieldDefs": [field_name]}, "qInitialDataFetch": []}}
             lobj = await call("CreateSessionObject", app_handle, [list_def])
             h = lobj.get("qReturn", {}).get("qHandle")
@@ -185,7 +196,7 @@ async def qix_export(occupation, point, nominated_state, visa, target_months):
         await apply_sel("Visa Type", visa)
 
         # Identify the Main Table and strip definition limits
-        print(f"Fetching results table definition...")
+        logging.info("Fetching results table definition...")
         t_res = await call("GetObject", app_handle, ["eymDb"])
         t_h = t_res.get("qReturn", {}).get("qHandle")
         props_res = await call("GetProperties", t_h)
@@ -210,7 +221,7 @@ async def qix_export(occupation, point, nominated_state, visa, target_months):
         if "qCalcCondition" in custom_hc:
             del custom_hc["qCalcCondition"]
             
-        print("Creating custom unrestricted Session Table...")
+        logging.info("Creating custom unrestricted Session Table...")
         session_obj_def = {
             "qInfo": {"qId": "CustomUnrestrictedTable", "qType": "table"},
             "qHyperCubeDef": custom_hc
@@ -229,10 +240,10 @@ async def qix_export(occupation, point, nominated_state, visa, target_months):
         for m_text in target_months:
             elem_id = month_map.get(m_text)
             if elem_id is None: 
-                print(f"Month {m_text} not found in Engine, skipping.")
+                logging.warning(f"Month {m_text} not found in Engine, skipping.")
                 continue
                 
-            print(f"\n--- Extracting Data for Month: {m_text} ---")
+            logging.info(f"--- Extracting Data for Month: {m_text} ---")
             await call("SelectListObjectValues", mh, ["/qListObjectDef", [elem_id], False])
             
             # Because Qlik is reactive, selecting the month automatically updates `CustomUnrestrictedTable`!
@@ -241,22 +252,22 @@ async def qix_export(occupation, point, nominated_state, visa, target_months):
             qcy = cust_hc_lay.get("qSize", {}).get("qcy", 0)
             
             if qcy == 0:
-                print(f"No data for {m_text}. Skipping...")
+                logging.info(f"No data for {m_text}. Skipping...")
                 continue
                 
-            print(f"Compiling {qcy} combined rows...")
+            logging.info(f"Compiling {qcy} combined rows...")
             exp = await call("ExportData", cust_h, ["CSV_C", "/qHyperCubeDef", "Export.csv", "A"])
             download_uri = exp.get("qUrl")
             
             if not download_uri:
-                print(f"Failed to get export URL for {m_text}.")
+                logging.error(f"Failed to get export URL for {m_text}.")
                 continue
     
             if not download_uri.startswith("/anonap/"):
                 download_uri = "/anonap" + download_uri
                 
             download_url = BASE_URL + download_uri
-            print(f"Downloading CSV payload...")
+            logging.info("Downloading CSV payload...")
             r = session.get(download_url, timeout=60)
             r.raise_for_status()
             
@@ -274,7 +285,7 @@ async def qix_export(occupation, point, nominated_state, visa, target_months):
             
             is_first_write = False
             
-        print(f"\nSuccess! All selected months merged and saved to {csv_out}")
+        logging.info(f"Success! All selected months merged and saved to {csv_out}")
 
 def run(occupation: Optional[str], point: Optional[str], nominated_state: Optional[str], visa: Optional[str], target_months: list[str]):
     asyncio.run(qix_export(occupation, point, nominated_state, visa, target_months))
