@@ -13,12 +13,12 @@ pip install -r requirements.txt
 ## Menjalankan Ekspor Data (Tool Utama)
 
 Skrip paling stabil dan tercepat untuk mengambil file CSV (termasuk Occupation, Points, Status, Nominated State, dll.) berada di:  
-`tools/qlik_websocket_export.py`
+`tools/eoi_skillselect_au.py`
 
 **Cara Menggunakan:**
 
 ```bash
-python tools/qlik_websocket_export.py
+python tools/eoi_skillselect_au.py
 ```
 
 Program akan berjalan diam-diam (_headless background_) dan meminta Anda mengisi parameter interaktif di terminal:
@@ -35,6 +35,22 @@ Program akan berjalan diam-diam (_headless background_) dan meminta Anda mengisi
 Skrip akan mencetak progresnya dan langsung mengunduh file hasil ke dalam:
 👉 `data/output/eoi_[Parameter]_[Timestamp].csv`
 
+## Menjalankan Ekspor NERO Data (Nowcast of Employment)
+
+Skrip baru untuk mengunduh dataset ketenagakerjaan dari Jobs and Skills Australia (JSA) secara otomatis. Skrip ini secara khusus dirancang menggunakan `curl_cffi` untuk menghindari pemblokiran Cloudflare/Incapsula pada situs web pemerintah.
+
+**Cara Menggunakan:**
+
+```bash
+python tools/nero_employment_data_au.py
+```
+
+**Fitur NERO Tool:**
+
+- Mengunduh rilis `Main NERO Data` & `Regional and Northern Australia Data` terbaru.
+- Ekstraksi `.zip` otomatis langsung ke format CSV.
+- File keluaran disimpan ke `data/nero/`.
+
 ---
 
 ## Struktur Folder Proyek Baru
@@ -42,7 +58,9 @@ Skrip akan mencetak progresnya dan langsung mengunduh file hasil ke dalam:
 Untuk menjaga repositori tetap bersih dan rapi, disarankan mengikuti struktur folder berikut:
 
 - `tools/`  
-  Berisi _tools_ andalan proyek ini, yakni `qlik_websocket_export.py` (tool utama) dan `qlik_selenium_export.py` (tool versi UI lama sebagai cadangan).
+  Berisi _tools_ andalan proyek ini:
+  - `eoi_skillselect_au.py` (Tool ekspor Qlik/EOI utama)
+  - `nero_employment_data_au.py` (Tool automasi NERO data)
 - `src/`  
   Berisi skrip _scraper_ dari iterasi / percobaan program versi terdahulu.
 - `data/`  

@@ -4,7 +4,7 @@ Requirements:
   pip install websockets requests
 
 Usage:
-  python tools/qlik_playwright_export.py
+  python tools/eoi_skillselect_au.py
 
 The script connects to the Qlik Sense Engine API via WebSockets. It will
 auto-select the latest "As At Month", apply the requested selections,

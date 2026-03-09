@@ -1,0 +1,119 @@
+import os
+import zipfile
+import tempfile
+import logging
+import datetime
+import sys
+from curl_cffi import requests
+
+log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nero.log')
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+def ensure_dir(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def get_possible_nero_urls(year, month):
+    """
+    Generates potential NERO zip download URLs for a given year and month.
+    """
+    folder_date = datetime.date(year, month, 1) + datetime.timedelta(days=32)
+    folder_year = folder_date.year
+    folder_month = folder_date.month
+    
+    base_url = f"https://www.jobsandskills.gov.au/sites/default/files/{folder_year}-{folder_month:02d}"
+    main_url = f"{base_url}/{year}-{month:02d}_nero.zip"
+    regional_url = f"{base_url}/{year}-{month:02d}_nero_for_regional_and_northern_australia.zip"
+    
+    return [main_url, regional_url]
+
+def download_and_extract_latest_nero_data(output_dir="data/nero", months_to_check=3):
+    """
+    Attempts to download the latest NERO data by checking the past few months.
+    Uses curl_cffi to perfectly impersonate Chrome TLS fingerprinting to bypass bot protection.
+    """
+    ensure_dir(output_dir)
+    extracted_files = []
+    
+    today = datetime.date.today()
+    current_year = today.year
+    current_month = today.month
+    
+    found_any = False
+
+    logger.info("Starting curl_cffi session to download NERO data.")
+    
+    # Create an impersonate session
+    session = requests.Session(impersonate="chrome")
+
+    for i in range(months_to_check):
+        m = current_month - i
+        y = current_year
+        while m <= 0:
+            m += 12
+            y -= 1
+        
+        urls_to_try = get_possible_nero_urls(y, m)
+        
+        for url in urls_to_try:
+            logger.info(f"Trying to download from {url}...")
+            file_name = url.split("/")[-1]
+            zip_path = os.path.join(tempfile.gettempdir(), file_name)
+            
+            try:
+                response = session.get(url, timeout=60)
+                
+                if response.status_code == 200:
+                    with open(zip_path, 'wb') as f:
+                        f.write(response.content)
+                    logger.info(f"Successfully downloaded: {zip_path}")
+                    
+                    logger.info(f"Extracting {file_name} into {output_dir}")
+                    try:
+                        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                            zip_ref.extractall(output_dir)
+                            extracted_files.extend(
+                                [os.path.join(output_dir, name) for name in zip_ref.namelist()]
+                            )
+                            logger.info(f" -> Extracted contents of {file_name}")
+                    except zipfile.BadZipFile:
+                        logger.error(f"Downloaded file {zip_path} is not a valid zip archive.")
+                    except Exception as e:
+                        logger.error(f"Failed to extract {zip_path}. Error: {e}")
+                    finally:
+                        if os.path.exists(zip_path):
+                            try:
+                                os.remove(zip_path)
+                            except:
+                                pass
+                            
+                    found_any = True
+                elif response.status_code == 404:
+                    logger.debug(f"File not found (404) at: {url}")
+                else:
+                    logger.warning(f"Failed to download (Status {response.status_code}) from {url}")
+                    
+            except Exception as e:
+                safe_error_msg = str(e).encode('ascii', 'ignore').decode()
+                logger.error(f"Request error for {url}: {safe_error_msg}")
+        
+        if found_any:
+            break
+
+    if not found_any:
+        logger.error(f"Could not find any NERO data for the past {months_to_check} months.")
+
+    logger.info(f"Successfully extracted {len(extracted_files)} files.")
+    return extracted_files
+
+if __name__ == "__main__":
+    target_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "nero")
+    download_and_extract_latest_nero_data(target_dir)
