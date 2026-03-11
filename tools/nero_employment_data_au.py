@@ -4,6 +4,7 @@ import tempfile
 import logging
 import datetime
 import sys
+import pandas as pd
 from curl_cffi import requests
 
 repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +38,35 @@ def get_possible_nero_urls(year, month):
     regional_url = f"{base_url}/{year}-{month:02d}_nero_for_regional_and_northern_australia.zip"
     
     return [main_url, regional_url]
+
+def convert_extracted_csvs_to_excel(extracted_files):
+    for fp in extracted_files:
+        if fp.lower().endswith('.csv'):
+            logger.info(f"Converting {fp} to Excel...")
+            try:
+                df = pd.read_csv(fp)
+                # Excel has a strict 1,048,576 row limit.
+                if len(df) > 1000000 and 'state_name' in df.columns:
+                    logger.info(f"File {fp} has {len(df)} rows (>1M). Splitting by state to fit in Excel.")
+                    for state in df['state_name'].dropna().unique():
+                        state_df = df[df['state_name'] == state]
+                        if len(state_df) <= 1000000:
+                            out_name = fp.replace('.csv', f'_{state}.xlsx')
+                            logger.info(f" -> Saving {state} subset to {out_name} ({len(state_df)} rows)...")
+                            state_df.to_excel(out_name, index=False)
+                        else:
+                            # Chunk it further if a state alone is more than 1M rows
+                            chunks = [state_df[i:i+1000000] for i in range(0, len(state_df), 1000000)]
+                            for idx, chunk in enumerate(chunks, 1):
+                                out_name = fp.replace('.csv', f'_{state}_part{idx}.xlsx')
+                                logger.info(f" -> Saving {state} part {idx} to {out_name} ({len(chunk)} rows)...")
+                                chunk.to_excel(out_name, index=False)
+                else:
+                    out_name = fp.replace('.csv', '.xlsx')
+                    logger.info(f" -> Saving {out_name} ({len(df)} rows)...")
+                    df.to_excel(out_name, index=False)
+            except Exception as e:
+                logger.error(f"Failed to convert {fp} to Excel: {e}")
 
 def download_and_extract_latest_nero_data(output_dir="data/nero", months_to_check=3):
     """
@@ -108,6 +138,7 @@ def download_and_extract_latest_nero_data(output_dir="data/nero", months_to_chec
                 safe_error_msg = str(e).encode('ascii', 'ignore').decode()
                 logger.error(f"Request error for {url}: {safe_error_msg}")
         
+        # If we successfully found at least one file for this month, don't check older months
         if found_any:
             break
 
@@ -115,6 +146,7 @@ def download_and_extract_latest_nero_data(output_dir="data/nero", months_to_chec
         logger.error(f"Could not find any NERO data for the past {months_to_check} months.")
 
     logger.info(f"Successfully extracted {len(extracted_files)} files.")
+    convert_extracted_csvs_to_excel(extracted_files)
     return extracted_files
 
 if __name__ == "__main__":
