@@ -54,9 +54,25 @@ def scrape_national_quotas(output_dir):
             # Assume the first extracted table is the primary quota table
             df = tables[0]
             
+            # Clean up the dataframe format
+            if isinstance(df.columns, pd.MultiIndex):
+                # Drop the top level multi-index (e.g. Migration Program planning levels...)
+                df.columns = df.columns.droplevel(0)
+                
+            # Remove any columns ending with .1 which are likely duplicated
+            df = df.loc[:, ~df.columns.str.endswith('.1')]
+            
+            # Forward fill the 'Visa Stream' missing values
+            if 'Visa Stream' in df.columns:
+                df['Visa Stream'] = df['Visa Stream'].ffill()
+                
+            # Clean zero-width space characters if any exist
+            df.columns = [str(col).replace('\u200b', '').strip() for col in df.columns]
+            df = df.replace('\u200b', '', regex=True)
+            
             # Clean up the dataframe (optional based on format, but saving raw is good first step)
-            output_file = os.path.join(output_dir, "national_migration_quotas.csv")
-            df.to_csv(output_file, index=False)
+            output_file = os.path.join(output_dir, "national_migration_quotas.xlsx")
+            df.to_excel(output_file, index=False)
             logging.info(f"Successfully saved National quotas to {output_file}")
             return True
         else:
@@ -90,8 +106,12 @@ def scrape_state_allocations(output_dir):
         # The main allocation table should be the first one
         df = tables[0]
         
-        output_file = os.path.join(output_dir, "state_nomination_allocations.csv")
-        df.to_csv(output_file, index=False)
+        # Clean zero-width space characters which can mess up CSV displays
+        df.columns = [str(col).replace('\u200b', '').replace('\xa0', ' ').strip() for col in df.columns]
+        df = df.replace('\u200b', '', regex=True).replace('\xa0', ' ', regex=True)
+        
+        output_file = os.path.join(output_dir, "state_nomination_allocations.xlsx")
+        df.to_excel(output_file, index=False)
         logging.info(f"Successfully saved State allocations to {output_file}")
         return True
         
