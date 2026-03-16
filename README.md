@@ -51,7 +51,8 @@ python tools/nero_employment_data_au.py
 
 - Mengunduh rilis `Main NERO Data` & `Regional and Northern Australia Data` terbaru.
 - Ekstraksi `.zip` otomatis langsung ke format CSV.
-- File keluaran CSV disimpan ke `data/nero/`.
+- **Konversi otomatis ke Excel (.xlsx)**: Mengingat ukuran data NERO yang sangat besar (>3,9 juta baris), skrip akan otomatis memecah output Excel per **State** (NSW, VIC, dsb) dan melakukan **chunking** (perpenggalan) jika data satu negara bagian masih melebihi limit 1 juta baris Excel.
+- File keluaran disimpan ke `data/nero/`.
 - File catatan histori log akan disimpan ke `data/log/nero/nero.log`.
 
 ## Menjalankan Ekspor Kuota Tahunan Migration (State & National)
@@ -68,8 +69,25 @@ python tools/migration_quotas_au.py
 
 - Mengunduh data "National Migration Program Planning Levels".
 - Mengunduh data "State and territory nomination allocations".
-- Menyimpan hasil ekstraksi secara otomatis ke format CSV di dalam folder `data/migration_quota/`.
+- Menyimpan hasil ekstraksi secara otomatis ke format **Excel (.xlsx)** dan CSV di dalam folder `data/migration_quota/`.
 - File catatan histori log akan disimpan ke `data/log/migration_quota/migration_quotas.log`.
+
+## Menjalankan Ekspor Status Visa State (Program Status)
+
+Skrip baru untuk memantau status pembukaan program nominasi negara bagian (State Nomination) dan tipe visa yang tersedia (190, 491, dll) langsung dari portal resmi masing-masing AI (Investment NSW, Live in Melbourne, dsb).
+
+**Cara Menggunakan:**
+
+```bash
+python tools/state_visa_types_au.py
+```
+
+**Fitur Visa Status Tool:**
+
+- Memantau 8 portal migrasi State/Territory Australia secara otomatis.
+- Deteksi status program (**Open**, **Active**, **Closed**, atau **Paused**) berdasarkan analisis kata kunci.
+- Menyimpan hasil ringkasan ke format **Excel (.xlsx)** dan CSV di `data/visa_types/`.
+- File catatan histori log akan disimpan ke `data/log/visa_types/state_visa_scraper.log`.
 
 ---
 
@@ -82,13 +100,15 @@ Untuk menjaga repositori tetap bersih dan rapi, disarankan mengikuti struktur fo
   - `eoi_skillselect_au.py` (Tool ekspor Qlik/EOI utama)
   - `nero_employment_data_au.py` (Tool automasi NERO data)
   - `migration_quotas_au.py` (Tool scraper Kuota Imigrasi)
+  - `state_visa_types_au.py` (Tool pemantau Status Visa State)
 - `src/`  
   Berisi skrip _scraper_ dari iterasi / percobaan program versi terdahulu.
 - `data/`  
   Berisi semua input statis dan direktori output sistem otomatis:
   - `data/eoi_ss/` : Folder keluaran hasil ekspor dari dashboard Qlik/EOI
-  - `data/nero/` : Folder keluaran hasil download & ekstrak NERO ZIP Data
-  - `data/migration_quota/` : Folder keluaran final Migration Quotas (State & National)
+  - `data/nero/` : Folder keluaran hasil download & ekstrak NERO ZIP Data (CSV & Split Excel)
+  - `data/migration_quota/` : Folder keluaran Migration Quotas (Excel & CSV)
+  - `data/visa_types/` : Folder keluaran Status Visa State (Excel & CSV)
   - `data/log/` : Menampung seluruh riwayat log pemakaian dari skrip tools terkait
 - `tests/`  
   Kumpulan arsip skrip percobaan backend (seperti `qix_test_*.py`) yang digunakan saat me-_reverse-engineer_ dan menjebol limitasi dimensi Qlik Engine.
